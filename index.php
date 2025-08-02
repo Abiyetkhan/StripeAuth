@@ -170,16 +170,18 @@ function process_cc($card) {
     }
 }
 
+// Handle /ping
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $_SERVER['REQUEST_URI'] === '/ping') {
     $start_time = microtime(true);
     echo json_encode([
         'status' => 'healthy',
         'response_time_ms' => (microtime(true) - $start_time) * 1000,
         'Api by' => '@Bruzely'
-    ]);
+    ], JSON_PRETTY_PRINT);
     exit;
 }
 
+// Handle /check_cc
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_SERVER['REQUEST_URI'] === '/check_cc') {
     $input = json_decode(file_get_contents('php://input'), true);
     $cards = $input['cards'] ?? [];
@@ -190,43 +192,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_SERVER['REQUEST_URI'] === '/check
         exit;
     }
 
-    $client = new Client();
-    $promises = [];
-    foreach ($cards as $card) {
-        $promises[] = $client->requestAsync('POST', 'http://localhost:8000/process_cc', [
-            'json' => ['card' => $card]
-        ]);
-    }
-
+    // Process cards synchronously for Vercel (async not reliable in serverless)
     $results = [];
-    $responses = Promise\Utils::settle($promises)->wait();
-    foreach ($responses as $response) {
-        if ($response['state'] === 'fulfilled') {
-            $results[] = json_decode((string)$response['value']->getBody(), true);
-        } else {
-            $results[] = [
-                'status' => 'declined',
-                'card' => $response['reason']->getRequest()->getBody()->getContents()['card'],
-                'message' => 'Error: ' . $response['reason']->getMessage(),
-                'Api by' => '@Bruzely'
-            ];
-        }
+    foreach ($cards as $card) {
+        $results[] = process_cc($card);
     }
 
     echo json_encode(['results' => $results, 'Api by' => '@Bruzely'], JSON_PRETTY_PRINT);
-    exit;
-}
-
-// Internal endpoint for processing cards (to support async)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_SERVER['REQUEST_URI'] === '/process_cc') {
-    $input = json_decode(file_get_contents('php://input'), true);
-    $card = $input['card'] ?? '';
-    if (!empty($card)) {
-        echo json_encode(process_cc($card), JSON_PRETTY_PRINT);
-    } else {
-        echo json_encode(['error' => 'No card provided', 'Api by' => '@Bruzely'], JSON_PRETTY_PRINT);
-        http_response_code(400);
-    }
     exit;
 }
 
