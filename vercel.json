@@ -1,10 +1,30 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/*.php", "use": "@vercel/php" }
+    {
+      "src": "index.php",
+      "use": "@vercel/php"
+    }
   ],
   "routes": [
-    { "src": "/check", "dest": "/api/index.php" },
-    { "src": "/ping", "dest": "/api/ping.php" }
+    {
+      "src": "/ping",
+      "methods": ["GET"],
+      "dest": "index.php"
+    },
+    {
+      "src": "/check_cc",
+      "methods": ["POST"],
+      "dest": "index.php"
+    },
+    {
+      "src": "/process_cc",
+      "methods": ["POST"],
+      "dest": "index.php"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "index.php"
+    }
   ]
 }
