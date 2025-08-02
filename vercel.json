@@ -1,11 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "index.php",
-      "use": "@vercel/php"
+  "framework": null,
+  "functions": {
+    "index.php": {
+      "memory": 3008,
+      "maxDuration": 30
     }
-  ],
+  },
   "routes": [
     {
       "src": "/ping",
@@ -14,11 +15,6 @@
     },
     {
       "src": "/check_cc",
-      "methods": ["POST"],
-      "dest": "index.php"
-    },
-    {
-      "src": "/process_cc",
       "methods": ["POST"],
       "dest": "index.php"
     },
